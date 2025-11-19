@@ -17,4 +17,15 @@ export interface ChatApiMessage {
   message: string;
   createdAt: string;
   updatedAt: string;
+  session?: string;
+}
+
+export interface ChatSession {
+  _id: string;
+  user: string;
+  title: string;
+  lastMessagePreview?: string;
+  lastActivityAt?: string;
+  createdAt: string;
+  updatedAt: string;
 }
