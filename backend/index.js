@@ -11,40 +11,32 @@ const app = express();
 // Connect to MongoDB
 connectDB();
 
-// Correct CORS
-const allowedOrigins = [
-  "http://localhost:5173",
-  process.env.FRONTEND_ORIGIN, // your Vercel URL
-].filter(Boolean); // remove null/undefined
-
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      // allow requests with no origin (mobile apps, Postman)
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        console.log("Blocked by CORS:", origin);
-        callback(new Error("Not allowed by CORS"));
-      }
-    },
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-  })
-);
-
-// Handle OPTIONS preflight
-app.options("/", cors());
+// CORS - Simple and permissive configuration
+app.use(cors({
+  origin: true, // Accept all origins
+  credentials: true,
+}));
 
 // Middleware
 app.use(express.json());
+
+// Request logging for debugging
+app.use((req, res, next) => {
+  console.log(`${req.method} ${req.path} - Origin: ${req.get('origin') || 'none'}`);
+  next();
+});
 
 // Routes
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/sessions', require('./routes/sessions'));
 app.use('/api/chats', require('./routes/chat'));
 app.use('/api/utils', require('./routes/utils'));
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error('Error:', err.message);
+  res.status(500).json({ message: err.message || 'Internal server error' });
+});
 
 // Basic health check
 app.get('/', (req, res) => {
