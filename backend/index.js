@@ -11,14 +11,31 @@ const app = express();
 // Connect to MongoDB
 connectDB();
 
-// CORS
-const allowedOrigin = process.env.FRONTEND_ORIGIN || 'http://localhost:5173';
+// Correct CORS
+const allowedOrigins = [
+  "http://localhost:5173",
+  process.env.FRONTEND_ORIGIN, // your Vercel URL
+].filter(Boolean); // remove null/undefined
+
 app.use(
   cors({
-    origin: allowedOrigin,
+    origin: function (origin, callback) {
+      // allow requests with no origin (mobile apps, Postman)
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        console.log("Blocked by CORS:", origin);
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true,
-  }),
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
 );
+
+// Handle OPTIONS preflight
+app.options("*", cors());
 
 // Middleware
 app.use(express.json());
@@ -36,7 +53,6 @@ app.get('/', (req, res) => {
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, 
-  "0.0.0.0", () => {
+app.listen(PORT, "0.0.0.0", () => {
   console.log(`Server running on port ${PORT}`);
 });
